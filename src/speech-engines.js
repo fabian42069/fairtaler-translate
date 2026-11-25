@@ -12,7 +12,7 @@ function kokoro() {
   if (!kokoroPromise) {
     kokoroPromise = (async () => {
       const { KokoroJP } = await import(/* @vite-ignore */ url('kokoro/kokoro-jp.web.js'));
-      return KokoroJP.load({ japanese: { assetsUrl: url('kokoro/jp') } });
+      return KokoroJP.load({ japanese: { assetsUrl: url('kokoro/jp'), dicArchiveUrl: url('kokoro/jp/open_jtalk_dic.bin') } });
     })();
     kokoroPromise.catch(() => { kokoroPromise = null; });
   }

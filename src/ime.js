@@ -45,18 +45,34 @@ export function createIme({ textarea, bar, isActive, onChange }) {
   let candidates = []; // { text, len } — len: how many typed kana it replaces
   let compStart = 0;
   let renderSeq = 0;
+  // True while the phone keyboard is still working on a word (a "composition").
+  // The text is never changed then: keyboards differ in how they cope with
+  // that, and some would type letters twice. The word is converted as soon as
+  // the keyboard lets go of it (compositionend); until then the suggestion bar
+  // already shows it in kana.
+  let composing = false;
 
   const active = () => isActive();
 
-  /** The hiragana typed since the last choice, ending at the cursor. */
+  /**
+   * The hiragana typed since the last choice, ending at the cursor, plus (while
+   * the keyboard is still composing) the romaji word it is working on, as kana.
+   * raw: how many characters in the box that covers.
+   */
   function composition() {
     const pos = textarea.selectionStart;
     if (pos !== textarea.selectionEnd) return null;
     const before = textarea.value.slice(0, pos);
-    let start = pos;
+    let end = pos;
+    let tail = '';
+    if (composing) {
+      const m = before.match(/[a-zA-Z'\-]+$/);
+      if (m) { end = pos - m[0].length; tail = toKana(m[0].toLowerCase()); }
+    }
+    let start = end;
     while (start > committedUpTo && start > 0 && HIRA.test(before[start - 1])) start--;
     if (start === pos) return null;
-    return { start, text: before.slice(start, pos) };
+    return { start, text: before.slice(start, end) + tail, raw: pos - start };
   }
 
   async function suggest() {
@@ -93,7 +109,9 @@ export function createIme({ textarea, bar, isActive, onChange }) {
     }
     push(toKatakana(kana), kana.length);
     push(kana, kana.length);
-    candidates = list.slice(0, 14);
+    // While the keyboard is composing, only whole-word suggestions make sense.
+    const usable = comp.raw === kana.length ? list : list.filter((c) => c.len === kana.length);
+    candidates = usable.slice(0, 14);
     compStart = comp.start;
     render(kana);
   }
@@ -131,8 +149,11 @@ export function createIme({ textarea, bar, isActive, onChange }) {
     const comp = composition();
     if (comp && c.len === comp.text.length) learned.set(comp.text, c.text);
     const typed = comp ? comp.text.length : c.len; // all the kana typed so far
+    // A whole-word choice replaces everything typed, romaji still being composed included.
+    const replace = comp && c.len === comp.text.length ? comp.raw : c.len;
     const v = textarea.value;
-    textarea.value = v.slice(0, compStart) + c.text + v.slice(compStart + c.len);
+    composing = false;
+    textarea.value = v.slice(0, compStart) + c.text + v.slice(compStart + replace);
     committedUpTo = compStart + c.text.length;
     // When only the start was converted, the rest stays to be converted next.
     const caret = committedUpTo + Math.max(0, typed - c.len);
@@ -147,28 +168,63 @@ export function createIme({ textarea, bar, isActive, onChange }) {
     hide();
   }
 
-  /** Call on every input event, before the text is translated. */
-  function handleInput(e) {
-    if (!active() || e?.isComposing) { if (!active()) hide(); return; }
+  /** Turns the romaji just before the cursor into kana. Returns true if the text changed. */
+  function convertBeforeCursor(wordDone = false) {
     const pos = textarea.selectionStart;
     const v = textarea.value;
     if (committedUpTo > v.length) committedUpTo = v.length;
     if (pos < committedUpTo) committedUpTo = pos;
-    // Convert the romaji just before the cursor.
-    const before = v.slice(0, pos);
-    const m = before.match(/[a-zA-Z'\-.,!?]+$/);
-    if (m) {
-      const run = m[0];
-      const kana = toKana(run, { IMEMode: true });
-      if (kana !== run) {
-        const start = pos - run.length;
-        textarea.value = v.slice(0, start) + kana + v.slice(pos);
-        const caret = start + kana.length;
-        textarea.setSelectionRange(caret, caret);
-      }
+    const m = v.slice(0, pos).match(/[a-zA-Z'\-.,!?]+$/);
+    if (!m) return false;
+    const run = m[0];
+    const kana = toKana(run, { IMEMode: !wordDone });
+    if (kana === run) return false;
+    const start = pos - run.length;
+    textarea.value = v.slice(0, start) + kana + v.slice(pos);
+    const caret = start + kana.length;
+    textarea.setSelectionRange(caret, caret);
+    return true;
+  }
+
+  /** Removes the character just before the cursor if it is `ch`. */
+  function dropBeforeCursor(ch) {
+    const p = textarea.selectionStart;
+    const v = textarea.value;
+    if (p === 0 || p !== textarea.selectionEnd || v[p - 1] !== ch) return false;
+    textarea.value = v.slice(0, p - 1) + v.slice(p);
+    textarea.setSelectionRange(p - 1, p - 1);
+    return true;
+  }
+
+  /** Call on every input event, before the text is translated. */
+  function handleInput(e) {
+    if (!active()) { hide(); return; }
+    if (composing || e?.isComposing) { suggest(); return; } // see `composing`
+    // Phone keyboards send Space and Enter as typed text, not as key presses:
+    // treat them like the keys and take the first suggestion.
+    const typed = e?.inputType === 'insertLineBreak' ? '\n' : (e?.inputType === 'insertText' && e.data === ' ' ? ' ' : null);
+    if (typed && candidates.length && !bar.hidden && dropBeforeCursor(typed)) {
+      choose(candidates[0]);
+      return;
     }
+    convertBeforeCursor();
     suggest();
   }
+
+  textarea.addEventListener('compositionstart', () => { composing = true; });
+  textarea.addEventListener('compositionend', async () => {
+    composing = false;
+    if (!active()) return;
+    // Some keyboards hand over the word together with the space after it.
+    const pos = textarea.selectionStart;
+    const before = textarea.value.slice(0, pos);
+    const withSpace = /[a-zA-Z'\-] $/.test(before) && dropBeforeCursor(' ');
+    // The word is finished, so a last "n" is ん.
+    const changed = convertBeforeCursor(true) || withSpace;
+    if (changed) onChange();
+    await suggest();
+    if (withSpace && candidates.length) choose(candidates[0]);
+  });
 
   function handleKeydown(e) {
     if (!active() || bar.hidden || e.isComposing) return;
@@ -184,6 +240,7 @@ export function createIme({ textarea, bar, isActive, onChange }) {
 
   function handleMove() {
     // Clicking or moving the cursor keeps what's there and starts fresh.
+    if (composing) return; // the keyboard moves the cursor itself while composing
     committedUpTo = textarea.selectionStart;
     hide();
   }
@@ -192,11 +249,20 @@ export function createIme({ textarea, bar, isActive, onChange }) {
   textarea.addEventListener('click', handleMove);
   textarea.addEventListener('keyup', (e) => { if (/^(Arrow|Home|End|Page)/.test(e.key)) handleMove(); });
 
+  // Phone keyboards: no automatic capital letters (a capital gives katakana)
+  // and no autocorrect turning romaji into English words.
+  function syncKeyboard() {
+    const on = active();
+    for (const [name, off] of [['autocapitalize', 'off'], ['autocorrect', 'off'], ['autocomplete', 'off']]) {
+      if (on) textarea.setAttribute(name, off); else textarea.removeAttribute(name);
+    }
+  }
+
   return {
     handleInput,
     /** Text was put in from elsewhere (drawing, history...): keep it as typed. */
     commitAll() { committedUpTo = textarea.selectionStart; hide(); },
-    refresh() { committedUpTo = textarea.selectionStart; hide(); },
+    refresh() { committedUpTo = textarea.selectionStart; hide(); syncKeyboard(); },
     preload() { dict(); },
   };
 }

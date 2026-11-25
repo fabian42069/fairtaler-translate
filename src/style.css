@@ -453,8 +453,23 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
   .picker-item { min-height: 48px; padding: 12px 16px 12px 8px; border-radius: 0; font-size: 16px; line-height: 24px; }
 }
 
+/* Phones: everything fits on one screen without scrolling. The two text
+   boxes share the height left over after the bars and buttons (about 312px);
+   long text scrolls inside its own box. */
+@media (max-width: 720px) {
+  :root { --pane-h: max(96px, calc((100vh - 312px) / 2)); }
+  @supports (height: 100dvh) { :root { --pane-h: max(96px, calc((100dvh - 312px) / 2)); } }
+  body { min-height: 0; }
+  .page { padding: 0 0 12px; }
+  .card { border-top: 0; }
+  :root { --pane-max: var(--pane-h); }
+  .source, .output-scroll { min-height: var(--pane-h); }
+  .shortcuts { gap: 28px; padding-top: 16px; }
+  .shortcut { gap: 4px; }
+  .shortcut-circle { width: 48px; height: 48px; }
+}
+
 @media (max-width: 380px) {
   .brand-name { font-size: 18px; }
   .shortcuts { gap: 24px; }
-  .shortcut-circle { width: 56px; height: 56px; }
 }

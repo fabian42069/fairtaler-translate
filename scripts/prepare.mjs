@@ -131,8 +131,12 @@ writeFileSync(join(kokoroOut, 'kokoro-jp.web.js'), kokoroLib);
 const jpOut = join(kokoroOut, 'jp');
 copyTree(join(kokoroPkg, 'browser'), join(jpOut, 'browser'));
 for (const f of readdirSync(kokoroPkg)) {
-  if (f.startsWith('openjtalk-') || f === 'open_jtalk_dic_utf_8-1.11.tar.gz') copyFileSync(join(kokoroPkg, f), join(jpOut, f));
+  if (f.startsWith('openjtalk-')) copyFileSync(join(kokoroPkg, f), join(jpOut, f));
 }
+// Saved without the .gz ending: web servers and the Android app send .gz files
+// with "Content-Encoding: gzip", so the browser unpacks them on the way and the
+// library's checksum no longer matches (Kokoro then falls back to eSpeak).
+copyFileSync(join(kokoroPkg, 'open_jtalk_dic_utf_8-1.11.tar.gz'), join(jpOut, 'open_jtalk_dic.bin'));
 // ONNX Runtime build that transformers.js expects.
 const tfDist = join(root, 'node_modules', '@huggingface', 'transformers', 'dist');
 mkdirSync(join(kokoroOut, 'ort'), { recursive: true });
