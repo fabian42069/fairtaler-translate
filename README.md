@@ -1,27 +1,39 @@
 # Fairtaler Translate
 
-A private translator for the web, Android and Linux, with extra help for Japanese.
+A private translator with extra help for Japanese — in your browser and on Android.
 
 > ℹ️ The programs I publish are always free and open source. I generate them with AI for no other reason than that I need and use the app myself. I publish them so anyone who wants to can use them too. Because I don't know anything about programming, I probably won't accept merge requests, but feel free to fork the project and make something beautiful out of it.
 
-## Features
-- Choose your translation source: offline (Mozilla, text stays on your device), Google, Google via a privacy proxy, DuckDuckGo, MyMemory, Apertium, LibreTranslate or Ollama
-- Japanese help: readings and romaji, type in romaji, draw kanji/kana by hand
-- Listen to text with offline voices
-- Translation history and saved translations, stored locally only
+## Get started
 
-## Use it
-- **PC (any browser):** open **https://fabian42069.codeberg.page/fairtaler-translate/** — nothing to install. The offline translation models and voices are downloaded by your browser the first time you use them, so the first start takes a while; later visits are much faster.
-- **Android:** get the **APK** from the [Releases](../../releases) page.
-- **Linux app:** get the **AppImage** from the [Releases](../../releases) page.
+### 💻 On your computer: in the browser
+**Open → https://fabian42069.codeberg.page/fairtaler-translate/**
 
-## Build
+Nothing to install, works in any modern browser. The first start takes a little longer, because the offline translator and the voices are downloaded once.
+
+### 📱 On Android
+1. On your phone, download **[Fairtaler-Translate-1.0.1.apk](https://github.com/fabian42069/fairtaler-translate/releases/download/v1.0.1/Fairtaler-Translate-1.0.1.apk)**.
+2. Open the downloaded file and tap **Install**. If your phone asks, allow installing apps from this source.
+
+Already have version 1.0.0? Uninstall it first; otherwise Android won't install the new version.
+
+## What it does
+- **Translate offline** (Mozilla's translator, your text never leaves your device), or choose an online source: Google, Google via a privacy proxy, DuckDuckGo, MyMemory, Apertium, LibreTranslate or Ollama.
+- **Japanese help:** readings and romaji, type in romaji to write Japanese, draw kanji/kana by hand.
+- **Listen** with natural offline voices.
+- **History and saved translations**, kept only on your own device.
+
+<details>
+<summary>For developers: build it yourself</summary>
+
 ```
 npm install
-npm run appimage   # Linux AppImage
+npm run build      # the website, in dist/
+npm run web        # publish the website to Codeberg Pages
 npm run apk        # Android APK
-npm run web        # publish the web version to Codeberg Pages
+npm run appimage   # Linux AppImage
 ```
+</details>
 
 ## License
 GPL-3.0-or-later
