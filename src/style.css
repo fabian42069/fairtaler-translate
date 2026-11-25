@@ -74,8 +74,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--subtext1); }
 .brand-mark {
-  width: 32px; height: 32px; border-radius: 8px;
-  background: var(--accent); color: var(--crust);
+  width: 32px; height: 32px;
   display: inline-flex; align-items: center; justify-content: center;
 }
 .brand-name { font: 400 22px/28px var(--font); color: var(--subtext1); }
