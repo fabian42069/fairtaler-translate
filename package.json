@@ -1,13 +1,13 @@
 {
   "name": "fairtaler-translate",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "scripts": {
     "build": "node scripts/prepare.mjs && vite build",
     "web": "npm run build && powershell -ExecutionPolicy Bypass -File scripts/publish-web.ps1",
     "appimage": "npm run build && cd desktop && npm install --no-audit --no-fund && npx electron-builder --config electron-builder.json --linux AppImage",
-    "apk": "npm run build && cd mobile && npm install --no-audit --no-fund && npx cap sync android && cd android && JAVA_HOME=\"$PWD/../../.tools/jdk\" ANDROID_HOME=\"$PWD/../../.tools/android-sdk\" ./gradlew assembleDebug"
+    "apk": "npm run build && cd mobile && npm install --no-audit --no-fund && npx cap sync android && node ../scripts/slim-android.mjs && cd android && JAVA_HOME=\"$PWD/../../.tools/jdk\" ANDROID_HOME=\"$PWD/../../.tools/android-sdk\" ./gradlew assembleDebug"
   },
   "dependencies": {
     "@fontsource/roboto": "^5.1.0",
