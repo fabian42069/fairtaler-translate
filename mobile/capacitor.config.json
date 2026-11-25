@@ -1,0 +1,12 @@
+{
+  "appId": "app.fairtaler.translate",
+  "appName": "Fairtaler Translate",
+  "webDir": "../dist",
+  "android": {
+    "backgroundColor": "#24273a",
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

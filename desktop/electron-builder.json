@@ -1,0 +1,30 @@
+{
+  "appId": "app.fairtaler.translate",
+  "productName": "Fairtaler Translate",
+  "artifactName": "Fairtaler-Translate-${version}-${arch}.${ext}",
+  "directories": {
+    "output": "../release",
+    "buildResources": "."
+  },
+  "files": [
+    "main.cjs",
+    "icon.png",
+    "package.json",
+    {
+      "from": "../dist",
+      "to": "dist",
+      "filter": [
+        "**/*"
+      ]
+    }
+  ],
+  "asar": false,
+  "linux": {
+    "target": [
+      "AppImage"
+    ],
+    "category": "Utility",
+    "icon": "icon.png",
+    "synopsis": "Private translator"
+  }
+}
