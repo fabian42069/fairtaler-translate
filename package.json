@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/prepare.mjs && vite build",
+    "web": "npm run build && node scripts/package-web.mjs",
     "appimage": "npm run build && cd desktop && npm install --no-audit --no-fund && npx electron-builder --config electron-builder.json --linux AppImage",
     "apk": "npm run build && cd mobile && npm install --no-audit --no-fund && npx cap sync android && cd android && JAVA_HOME=\"$PWD/../../.tools/jdk\" ANDROID_HOME=\"$PWD/../../.tools/android-sdk\" ./gradlew assembleDebug"
   },
